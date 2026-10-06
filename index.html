@@ -42,15 +42,15 @@ body::before {
 /* ===== КНОПКА ЗВУКА ===== */
 .sound-btn {
   position: fixed;
-  top: 20px; right: 20px;
-  width: 50px; height: 50px;
-  background: rgba(10,61,10,0.9);
+  top: 15px; right: 15px;
+  width: 45px; height: 45px;
+  background: rgba(10,61,10,0.95);
   border: 2px solid #00ff41;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
   cursor: pointer;
-  z-index: 1000;
+  z-index: 2000;
   color: white;
   box-shadow: 0 0 15px rgba(0,255,65,0.5);
 }
@@ -322,6 +322,7 @@ body::before {
   font-family: 'Courier New', monospace;
   font-weight: bold;
   box-shadow: 0 0 10px rgba(0,255,65,0.3);
+  cursor: pointer;
 }
 
 .keyboard {
@@ -386,7 +387,6 @@ body::before {
   75% { transform: translateX(-50%) scaleX(1.05); }
 }
 
-/* Традиционный футбольный мяч */
 .ball {
   position: absolute;
   bottom: 30px;
@@ -398,14 +398,12 @@ body::before {
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
 }
 
-/* Анимация гола - мяч летит в ворота */
 .ball.goal {
   bottom: 110px;
   left: 50%;
   transform: translateX(-50%) scale(0.6);
 }
 
-/* Анимация промаха - мяч улетает в сторону */
 .ball.miss-left {
   bottom: 150px;
   left: 15%;
@@ -555,27 +553,44 @@ body::before {
   to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
 }
 
+/* ===== СКРЫТЫЙ INPUT ДЛЯ МОБИЛЬНЫХ ===== */
+#hiddenInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
 @media (max-width: 600px) {
   .features { grid-template-columns: repeat(2, 1fr); }
   .level-cards { grid-template-columns: 1fr; }
   .main-title { font-size: 32px; }
   .question-text { font-size: 32px; }
-  .key { padding: 14px; font-size: 22px; }
+  .key { padding: 12px; font-size: 20px; }
   .block { padding: 25px; }
   .top-bar { gap: 8px; }
   .score-box, .timer-box { font-size: 14px; padding: 6px 10px; }
+  .field { height: 150px; }
+  .goal { width: 140px; height: 55px; }
+  .ball { font-size: 35px; }
+  .ball.goal { bottom: 80px; }
+  .ball.miss-left, .ball.miss-right { bottom: 110px; }
 }
 </style>
 </head>
 <body>
 
 <!-- Кнопка звука -->
-<button class="sound-btn" id="soundBtn" onclick="toggleSound()"></button>
+<button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+<!-- Скрытый input для мобильной клавиатуры -->
+<input type="tel" id="hiddenInput" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;">
 
 <!-- ===== ГЛАВНОЕ МЕНЮ ===== -->
 <div id="menuScreen" class="screen active">
   <div class="block">
-    <div class="main-title"> ФУТБОЛЬНО-<br><span class="accent">МАТЕМАТИЧЕСКИЙ КВИЗ</span></div>
+    <div class="main-title">⚽ ФУТБОЛЬНО-<br><span class="accent">МАТЕМАТИЧЕСКИЙ КВИЗ</span></div>
     <div class="main-subtitle">Забивай голы правильными ответами!</div>
     <div class="features">
       <div class="feature"><span class="icon">🎯</span>10 заданий</div>
@@ -625,9 +640,9 @@ body::before {
         </div>
         <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
       </div>
-      <div class="score-box">⚽ <span id="scoreP">0</span> : <span id="scoreO">0</span> 🥅</div>
-      <div class="timer-box">️ <span id="timerText">15.0</span>с</div>
-      <button class="menu-btn" onclick="confirmExit()"> В МЕНЮ</button>
+      <div class="score-box"> <span id="scoreP">0</span> : <span id="scoreO">0</span> 🥅</div>
+      <div class="timer-box">⏱️ <span id="timerText">15.0</span>с</div>
+      <button class="menu-btn" onclick="confirmExit()">🏠 В МЕНЮ</button>
     </div>
 
     <div class="field">
@@ -641,7 +656,7 @@ body::before {
       <div class="question-text" id="questionText">4 + 6 = ?</div>
     </div>
 
-    <div class="answer-box" id="answerBox">0</div>
+    <div class="answer-box" id="answerBox" onclick="focusInput()">0</div>
 
     <div class="keyboard">
       <button class="key" onclick="pressKey('1')">1</button>
@@ -794,6 +809,12 @@ function startTimer() {
 }
 function updateTimer() { document.getElementById('timerText').textContent = G.timeLeft.toFixed(1); }
 
+function focusInput() {
+  var input = document.getElementById('hiddenInput');
+  input.style.pointerEvents = 'auto';
+  input.focus();
+}
+
 function pressKey(k) {
   initAudio(); sndClick();
   if (G.locked) return;
@@ -808,6 +829,21 @@ document.addEventListener('keydown', function(e) {
   if (e.key >= '0' && e.key <= '9') pressKey(e.key);
   else if (e.key === 'Backspace' || e.key.toLowerCase() === 'c') pressKey('C');
   else if (e.key === 'Enter') pressKey('✓');
+});
+
+// Обработка ввода с мобильной клавиатуры
+document.getElementById('hiddenInput').addEventListener('input', function(e) {
+  var val = e.target.value.replace(/\D/g, '');
+  if (val.length > 4) val = val.substring(0, 4);
+  G.answer = val;
+  document.getElementById('answerBox').textContent = val || '0';
+  if (val.length > 0 && val === G.correct.toString()) {
+    setTimeout(function() { pressKey('✓'); }, 100);
+  }
+});
+
+document.getElementById('hiddenInput').addEventListener('blur', function() {
+  this.style.pointerEvents = 'none';
 });
 
 function submit() {
